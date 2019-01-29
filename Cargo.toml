@@ -1,0 +1,7 @@
+[package]
+name = "palette"
+version = "0.1.0"
+authors = ["Ian Brault <ian.brault@engineering.ucla.edu>"]
+edition = "2018"
+
+[dependencies]
