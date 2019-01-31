@@ -3,22 +3,18 @@
  * author: Ian Brault <ian.brault@engineering.ucla.edu>
  */
 
-extern crate clap;
-extern crate colored;
-extern crate image;
-
 mod error;
+mod kmeans;
 mod pixel;
 
 use std::cmp;
 use std::fs;
 
 use clap::{App, Arg};
-use image::GenericImage;
 
-use self::pixel::Pixel;
+use crate::pixel::Pixel;
 
-// Program Config & Command-Line Args
+// Program Configuration & Command-Line Args
 
 struct Config {
     image_file: String,
@@ -60,9 +56,12 @@ fn get_bytestring(nbytes: u64) -> String {
 }
 
 
-fn get_pixels<D>(image: D) -> Vec<Pixel> where D: GenericImage {
+fn get_pixels(image: image::DynamicImage) -> Vec<Pixel> {
+    // reads as RGB, ignores alpha channel
+    let image_rgb = image.to_rgb();
+
     // initialize buffer based on size hint
-    let size_hint = image.pixels().size_hint();
+    let size_hint = image_rgb.pixels().size_hint();
     let buf_size = if size_hint.1.is_some() {
         size_hint.1.unwrap()
     } else {
@@ -70,18 +69,25 @@ fn get_pixels<D>(image: D) -> Vec<Pixel> where D: GenericImage {
     };
 
     let mut pixel_buf: Vec<Pixel> = Vec::with_capacity(buf_size);
+    for pixel in image_rgb.pixels() {
+        let [r, g, b] = pixel.data;
+        pixel_buf.push(Pixel::new(r, g, b));
+    }
 
     pixel_buf
 }
 
 
-fn generate_palette<D>(cfg: Config, image: D) where D: GenericImage {
+fn generate_palette(cfg: Config, image: image::DynamicImage) {
     let image_size = fs::metadata(&cfg.image_file).unwrap().len();
-
     println!("using image {} ({})", &cfg.image_file, get_bytestring(image_size));
     println!("loading image...");
 
+    // load pixel values into memory
     let pixel_buf = get_pixels(image);
+
+    // run k-means clustering to get palette values as clusters
+    let centroids = Pixel::generate_centroids(5);
 }
 
 
