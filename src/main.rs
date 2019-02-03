@@ -87,7 +87,7 @@ fn generate_palette(cfg: Config, image: image::DynamicImage) {
     let pixel_buf = get_pixels(image);
 
     // run k-means clustering to get palette values as clusters
-    let centroids = Pixel::generate_centroids(5);
+    let clusters = kmeans::k_cluster(5, pixel_buf);
 }
 
 
