@@ -6,7 +6,7 @@
 
 use crate::kmeans::KVector;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Pixel {
     r: u8,
     g: u8,
@@ -36,5 +36,28 @@ impl KVector for Pixel {
 
         let n_vecs = vectors.len() as u64;
         Pixel::new((sum.0 / n_vecs) as u8, (sum.1 / n_vecs) as u8, (sum.2 / n_vecs) as u8)
+    }
+}
+
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_distance() {
+        let p = Pixel::new(12, 4, 20);
+        assert_eq!(p.distance(&Pixel::new(8, 5, 18)), 21);
+        assert_eq!(p.distance(&Pixel::new(16, 3, 22)), 21);
+        assert_eq!(p.distance(&Pixel::new(12, 4, 20)), 0);
+    }
+
+    #[test]
+    fn test_average() {
+        let data = vec![
+            Pixel::new(0,0,0), Pixel::new(4,5,6), Pixel::new(12,8,20), Pixel::new(16,1,42)
+        ];
+        assert_eq!(Pixel::average(&data), Pixel::new(8, 3, 17));
     }
 }

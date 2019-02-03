@@ -51,3 +51,27 @@ pub fn k_means_pp<KV>(k: u32, data: &Vec<KV>) -> Vec<KV> where KV: KVector {
 pub fn k_cluster<KV>(k: u32, data: Vec<KV>) where KV: KVector {
     let centroids = k_means_pp(k, &data);
 }
+
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::pixel::Pixel;
+
+    #[test]
+    fn test_update_weights() {
+        let data = vec![
+            Pixel::new(0,0,0), Pixel::new(4,5,6), Pixel::new(12,8,20), Pixel::new(16,1,42), Pixel::new(20, 12, 2)
+        ];
+        let mut weights = vec![std::u32::MAX; data.len()];
+
+        let center1 = data.get(1).unwrap();
+        weights = update_weights(weights, center1, &data);
+        assert_eq!(weights, vec![77, 0, 269, 1456, 321]);
+
+        let center2 = data.get(3).unwrap();
+        weights = update_weights(weights, center2, &data);
+        assert_eq!(weights, vec![77, 0, 269, 0, 321]);
+    }
+}
