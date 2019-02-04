@@ -8,7 +8,7 @@ use std::ops::Mul;
 
 use crate::kmeans::GenericVector;
 
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Pixel {
     r: u8,
     g: u8,
