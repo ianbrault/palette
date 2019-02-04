@@ -70,18 +70,20 @@ pub fn k_means_pp<V>(k: u32, data: &Vec<V>) -> Vec<V>
 }
 
 
-fn min_index(vec: &Vec<i64>) -> usize {
-    let mut min = std::i64::MAX;
-    let mut min_index: i32 = -1;
+fn index_of_closest_center<V>(v: &V, centers: &Vec<V>) -> i32
+    where V: GenericVector
+{
+    let mut min = std::u32::MAX;
+    let mut min_index = -1;
 
-    for (i, v) in vec.iter().enumerate() {
-        if v < &min {
-            min = *v;
+    for (i, dist) in centers.iter().map(|c| v.distance(c)).enumerate() {
+        if dist < min {
+            min = dist;
             min_index = i as i32;
         }
     }
 
-    min_index as usize
+    min_index
 }
 
 fn assign_centers<V>(centers: &Vec<V>, cluster_vecs: &mut Vec<ClusterVector<V>>) -> bool
@@ -89,8 +91,7 @@ fn assign_centers<V>(centers: &Vec<V>, cluster_vecs: &mut Vec<ClusterVector<V>>)
 {
     let mut change_made = false;
     for cv in cluster_vecs.iter_mut() {
-        let closest = min_index(&centers.iter().map(|c| cv.vector.distance(c) as i64).collect()) as i32;
-
+        let closest = index_of_closest_center(&cv.vector, &centers);
         if cv.assignment != closest {
             cv.assignment = closest;
             change_made = true;
