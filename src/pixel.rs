@@ -34,7 +34,9 @@ impl Mul<f64> for Pixel {
 }
 
 impl GenericVector for Pixel {
-    fn average(vectors: &Vec<Pixel>) -> Pixel {
+    fn average(vectors: Vec<&Pixel>) -> Pixel {
+        let n = vectors.len() as u64;
+
         let mut sum: (u64, u64, u64) = (0, 0, 0);
         for v in vectors {
             sum.0 += v.r as u64;
@@ -42,7 +44,6 @@ impl GenericVector for Pixel {
             sum.2 += v.b as u64;
         }
 
-        let n = vectors.len() as u64;
         Pixel::new(sum.0 as u8, sum.1 as u8, sum.2 as u8) * (1.0 / n as f64)
     }
 

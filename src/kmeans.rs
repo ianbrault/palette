@@ -11,7 +11,7 @@ use rand::distributions::{Uniform, WeightedIndex};
 
 // generic vector used in the k-means clustering algorithm
 pub trait GenericVector<Element=Self>: Clone {
-    fn average(vectors: &Vec<Element>) -> Element;
+    fn average(vectors: Vec<&Element>) -> Element;
     fn distance(&self, other: &Element) -> u32;
 }
 
@@ -55,13 +55,15 @@ pub fn k_means_pp<V>(k: u32, data: &Vec<V>) -> Vec<V>
     let mut rng = thread_rng();
     let udist = Uniform::new(0, data.len());
 
+    // first center is chosen randomly
     let initial = data[rng.sample(udist)].clone();
     update_weights(&mut weights, &initial, data);
     centers.push(initial);
 
+    // all other centers are chosen with a probability based on the distance to prior centers
     for _ in 1..k {
-        let dist = WeightedIndex::new(&weights).unwrap();
-        let center = data[dist.sample(&mut rng)].clone();
+        let wdist = WeightedIndex::new(&weights).unwrap();
+        let center = data[wdist.sample(&mut rng)].clone();
         update_weights(&mut weights, &center, data);
         centers.push(center);
     }
@@ -110,9 +112,9 @@ fn update_centers<V>(centers: Vec<V>, cluster_vecs: &Vec<ClusterVector<V>>) -> V
     for i in 0..n_centers {
         let cluster = cluster_vecs.iter()
             .filter(|cv| cv.assignment == i as i32)
-            .map(|cv| cv.vector.clone())
+            .map(|cv| &cv.vector)
             .collect();
-        new_centers.push(V::average(&cluster));
+        new_centers.push(V::average(cluster));
     }
 
     new_centers
