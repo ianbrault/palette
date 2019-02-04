@@ -4,8 +4,6 @@
  * author: Ian Brault <ian.brault@engineering.ucla.edu>
  */
 
-use std::ops::Mul;
-
 use crate::kmeans::GenericVector;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -21,18 +19,6 @@ impl Pixel {
     }
 }
 
-impl Mul<f64> for Pixel {
-    type Output = Pixel;
-
-    fn mul(self, rhs: f64) -> Pixel {
-        Pixel {
-            r: ((self.r as f64) * rhs) as u8,
-            g: ((self.g as f64) * rhs) as u8,
-            b: ((self.b as f64) * rhs) as u8,
-        }
-    }
-}
-
 impl GenericVector for Pixel {
     fn average(vectors: Vec<&Pixel>) -> Pixel {
         let n = vectors.len() as u64;
@@ -44,7 +30,11 @@ impl GenericVector for Pixel {
             sum.2 += v.b as u64;
         }
 
-        Pixel::new(sum.0 as u8, sum.1 as u8, sum.2 as u8) * (1.0 / n as f64)
+        let r = sum.0 / n;
+        let g = sum.1 / n;
+        let b = sum.2 / n;
+
+        Pixel::new(r as u8, g as u8, b as u8)
     }
 
     fn distance(&self, other: &Pixel) -> u32 {
