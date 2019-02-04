@@ -36,11 +36,11 @@ impl<V> ClusterVector<V> where V: GenericVector {
 }
 
 
-fn update_weights<V>(weights: &mut Vec<u32>, vec: &V, data: &Vec<V>)
+fn update_weights<V>(weights: &mut Vec<u64>, vec: &V, data: &Vec<V>)
     where V: GenericVector
 {
     for (i, v) in data.iter().enumerate() {
-        weights[i] = cmp::min(weights[i], vec.distance(v));
+        weights[i] = cmp::min(weights[i], vec.distance(v) as u64);
     }
 }
 
@@ -50,7 +50,7 @@ pub fn k_means_pp<V>(k: u32, data: &Vec<V>) -> Vec<V>
 {
     let mut centers = Vec::with_capacity(k as usize);
     // the weight for each vector is the minimum distance to a previously-generated center
-    let mut weights = vec![std::u32::MAX; data.len()];
+    let mut weights = vec![std::u64::MAX; data.len()];
 
     let mut rng = thread_rng();
     let udist = Uniform::new(0, data.len());
@@ -148,7 +148,7 @@ mod tests {
         let data = vec![
             Pixel::new(0,0,0), Pixel::new(4,5,6), Pixel::new(12,8,20), Pixel::new(16,1,42), Pixel::new(20, 12, 2)
         ];
-        let mut weights = vec![std::u32::MAX; data.len()];
+        let mut weights = vec![std::u64::MAX; data.len()];
 
         let center1 = &data[1];
         update_weights(&mut weights, center1, &data);
