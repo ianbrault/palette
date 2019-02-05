@@ -17,6 +17,10 @@ impl Pixel {
     pub fn new(r: u8, g: u8, b: u8) -> Pixel {
         Pixel { r, g, b }
     }
+
+    pub fn as_hex(&self) -> String {
+        format!("#{:02x}{:02x}{:02x}", self.r, self.b, self.g)
+    }
 }
 
 impl GenericVector for Pixel {

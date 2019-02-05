@@ -86,8 +86,14 @@ fn generate_palette(cfg: Config, image: image::DynamicImage) {
     // load pixel values into memory
     let pixel_buf = get_pixels(image);
 
+    println!("analyzing colors...");
     // run k-means clustering to get palette values as clusters
     let clusters = kmeans::k_cluster(5, pixel_buf);
+
+    println!();
+    for (i, color) in clusters.iter().enumerate() {
+        println!("color {}: {}", i + 1, color.as_hex());
+    }
 }
 
 
