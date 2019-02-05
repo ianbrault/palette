@@ -18,12 +18,21 @@ use crate::pixel::Pixel;
 
 struct Config {
     image_file: String,
+    n_colors: u8,
 }
 
 impl Config {
     fn new(args: clap::ArgMatches) -> Config {
         Config {
             image_file: String::from(args.value_of("image").unwrap()),
+            n_colors: args.value_of("n_colors").unwrap_or("5").parse::<u8>().unwrap(),
+        }
+    }
+
+    fn valid_n_colors(arg: String) -> Result<(), String> {
+        match arg.parse::<u8>() {
+            Ok(_) => Ok(()),
+            Err(err) => Err(err.to_string()),
         }
     }
 
@@ -32,6 +41,12 @@ impl Config {
         let args = App::new(env!("CARGO_PKG_NAME"))
             .version(version.as_str())
             .author(env!("CARGO_PKG_AUTHORS"))
+            .arg(Arg::with_name("n_colors")
+                .short("n")
+                .long("n-colors")
+                .takes_value(true)
+                .validator(Config::valid_n_colors)
+                .help("number of palette colors generated (default=5)"))
             .arg(Arg::with_name("image")
                 .required(true)
                 .help("input image file"));
@@ -88,7 +103,7 @@ fn generate_palette(cfg: Config, image: image::DynamicImage) {
 
     println!("analyzing colors...");
     // run k-means clustering to get palette values as clusters
-    let clusters = kmeans::k_cluster(5, pixel_buf);
+    let clusters = kmeans::k_cluster(cfg.n_colors as u32, pixel_buf);
 
     println!();
     for (i, color) in clusters.iter().enumerate() {
