@@ -3,6 +3,7 @@
  * author: ian brault <ian.brault@engineering.ucla.edu>
  */
 
+mod config;
 mod error;
 mod kmeans;
 mod output;
@@ -11,78 +12,10 @@ mod pixel;
 use std::cmp;
 use std::fs;
 
-use clap::{App, Arg};
 use image::DynamicImage;
 
+use crate::config::Config;
 use crate::pixel::Pixel;
-
-
-struct Config {
-    input_file: String,
-    output_file: String,
-    n_colors: u8,
-    image_output: bool,
-    term_output: bool,
-}
-
-impl Config {
-    fn new(args: clap::ArgMatches) -> Config {
-        let input_file = String::from(args.value_of("input_file").unwrap());
-        let input_base = &input_file[0..input_file.rfind('.').unwrap()];
-        let file_type = &input_file[input_file.rfind('.').unwrap()..];
-
-        let output_file = if args.is_present("output_file") {
-            String::from(args.value_of("output_file").unwrap())
-        } else {
-            format!("{}_palette.{}", input_base, file_type)
-        };
-
-        Config {
-            input_file,
-            output_file,
-            n_colors: args.value_of("n").unwrap_or("5").parse::<u8>().unwrap(),
-            image_output: !args.is_present("no_image_output"),
-            term_output: args.is_present("term_output"),
-        }
-    }
-
-    fn valid_n_colors(arg: String) -> Result<(), String> {
-        match arg.parse::<u8>() {
-            Ok(_) => Ok(()),
-            Err(err) => Err(err.to_string()),
-        }
-    }
-
-    fn parse() -> Config {
-        let version = format!("v{}", env!("CARGO_PKG_VERSION"));
-        let args = App::new(env!("CARGO_PKG_NAME"))
-            .version(version.as_str())
-            .author(env!("CARGO_PKG_AUTHORS"))
-            .arg(Arg::with_name("n")
-                .short("n")
-                .long("n-colors")
-                .takes_value(true)
-                .validator(Config::valid_n_colors)
-                .help("number of palette colors generated (default=5)"))
-            .arg(Arg::with_name("output_file")
-                .short("o")
-                .long("output")
-                .takes_value(true)
-                .help("output image file"))
-            .arg(Arg::with_name("no_image_output")
-                .long("no-image")
-                .help("skip writing the output image"))
-            .arg(Arg::with_name("term_output")
-                .short("t")
-                .long("term")
-                .help("print palette colors to the terminal"))
-            .arg(Arg::with_name("input_file")
-                .required(true)
-                .help("input image file"));
-
-        Config::new(args.get_matches())
-    }
-}
 
 
 fn get_bytestring(nbytes: u64) -> String {
