@@ -1,31 +1,48 @@
 /*
  * src/main.rs
- * author: Ian Brault <ian.brault@engineering.ucla.edu>
+ * author: ian brault <ian.brault@engineering.ucla.edu>
  */
 
 mod error;
 mod kmeans;
+mod output;
 mod pixel;
 
 use std::cmp;
 use std::fs;
 
 use clap::{App, Arg};
+use image::DynamicImage;
 
 use crate::pixel::Pixel;
 
-// Program Configuration & Command-Line Args
 
 struct Config {
-    image_file: String,
+    input_file: String,
+    output_file: String,
     n_colors: u8,
+    image_output: bool,
+    term_output: bool,
 }
 
 impl Config {
     fn new(args: clap::ArgMatches) -> Config {
+        let input_file = String::from(args.value_of("input_file").unwrap());
+        let input_base = &input_file[0..input_file.rfind('.').unwrap()];
+        let file_type = &input_file[input_file.rfind('.').unwrap()..];
+
+        let output_file = if args.is_present("output_file") {
+            String::from(args.value_of("output_file").unwrap())
+        } else {
+            format!("{}_palette.{}", input_base, file_type)
+        };
+
         Config {
-            image_file: String::from(args.value_of("image").unwrap()),
-            n_colors: args.value_of("n_colors").unwrap_or("5").parse::<u8>().unwrap(),
+            input_file,
+            output_file,
+            n_colors: args.value_of("n").unwrap_or("5").parse::<u8>().unwrap(),
+            image_output: !args.is_present("no_image_output"),
+            term_output: args.is_present("term_output"),
         }
     }
 
@@ -41,13 +58,25 @@ impl Config {
         let args = App::new(env!("CARGO_PKG_NAME"))
             .version(version.as_str())
             .author(env!("CARGO_PKG_AUTHORS"))
-            .arg(Arg::with_name("n_colors")
+            .arg(Arg::with_name("n")
                 .short("n")
                 .long("n-colors")
                 .takes_value(true)
                 .validator(Config::valid_n_colors)
                 .help("number of palette colors generated (default=5)"))
-            .arg(Arg::with_name("image")
+            .arg(Arg::with_name("output_file")
+                .short("o")
+                .long("output")
+                .takes_value(true)
+                .help("output image file"))
+            .arg(Arg::with_name("no_image_output")
+                .long("no-image")
+                .help("skip writing the output image"))
+            .arg(Arg::with_name("term_output")
+                .short("t")
+                .long("term")
+                .help("print palette colors to the terminal"))
+            .arg(Arg::with_name("input_file")
                 .required(true)
                 .help("input image file"));
 
@@ -71,7 +100,7 @@ fn get_bytestring(nbytes: u64) -> String {
 }
 
 
-fn get_pixels(image: image::DynamicImage) -> Vec<Pixel> {
+fn get_pixels(image: &DynamicImage) -> Vec<Pixel> {
     // reads as RGB, ignores alpha channel
     let image_rgb = image.to_rgb();
 
@@ -93,21 +122,24 @@ fn get_pixels(image: image::DynamicImage) -> Vec<Pixel> {
 }
 
 
-fn generate_palette(cfg: Config, image: image::DynamicImage) {
-    let image_size = fs::metadata(&cfg.image_file).unwrap().len();
-    println!("using image {} ({})", &cfg.image_file, get_bytestring(image_size));
+fn generate_palette(cfg: Config, image: DynamicImage) {
+    let image_size = fs::metadata(&cfg.input_file).unwrap().len();
+    println!("using image {} ({})", &cfg.input_file, get_bytestring(image_size));
     println!("loading image...");
 
     // load pixel values into memory
-    let pixel_buf = get_pixels(image);
+    let pixel_buf = get_pixels(&image);
 
     println!("analyzing colors...");
     // run k-means clustering to get palette values as clusters
     let clusters = kmeans::k_cluster(cfg.n_colors as u32, pixel_buf);
 
-    println!();
-    for (i, color) in clusters.iter().enumerate() {
-        println!("color {}: {}", i + 1, color.as_hex());
+    if cfg.term_output {
+        output::to_terminal(&clusters);
+    }
+
+    if cfg.image_output {
+        output::to_image(cfg.output_file, image, clusters);
     }
 }
 
@@ -115,8 +147,8 @@ fn generate_palette(cfg: Config, image: image::DynamicImage) {
 fn main() {
     let cfg = Config::parse();
 
-    match image::open(&cfg.image_file) {
+    match image::open(&cfg.input_file) {
         image @ Ok(_) => generate_palette(cfg, image.unwrap()),
-        Err(image_err) => error::on_image_err(image_err, cfg.image_file),
+        Err(image_err) => error::on_image_err(image_err, cfg.input_file),
     }
 }
