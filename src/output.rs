@@ -8,7 +8,7 @@ use image::{DynamicImage, GenericImageView, ImageBuffer, RgbaImage};
 use crate::pixel::Pixel;
 
 
-pub fn to_terminal(clusters: &Vec<Pixel>) {
+pub fn to_terminal(clusters: &[Pixel]) {
     println!();
     for (i, color) in clusters.iter().enumerate() {
         println!("color {}: {}", i + 1, color.as_hex());
@@ -53,11 +53,12 @@ impl Image {
     fn is_palette(&self, x: u32, y: u32, n_colors: u32) -> i32 {
         let base_x = self.padding + self.i_width + self.padding;
         // x is in the correct range
-        if !(x >= base_x && x < base_x + self.palette_size) {
-            return -1;
+        let is_x = x >= base_x && x < base_x + self.palette_size;
         // y is not an outer border
-        } else if y <= self.padding || y >= self.height - self.padding {
+        let is_y = y <= self.padding || y >= self.height - self.padding;
+        if !is_x || is_y {
             return -1;
+
         }
 
         let mut iter_y = y as i32 - self.padding as i32;
@@ -76,7 +77,7 @@ impl Image {
 }
 
 
-fn write_line(y: u32, imgbuf: &mut RgbaImage, image: &Image, clusters: &Vec<Pixel>) {
+fn write_line(y: u32, imgbuf: &mut RgbaImage, image: &Image, clusters: &[Pixel]) {
     let n_clusters = clusters.len() as u32;
 
     for x in 0..image.width {

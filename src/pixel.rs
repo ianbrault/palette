@@ -33,9 +33,9 @@ impl GenericVector for Pixel {
 
         let mut sum: (u64, u64, u64) = (0, 0, 0);
         for v in vectors {
-            sum.0 += v.r as u64;
-            sum.1 += v.g as u64;
-            sum.2 += v.b as u64;
+            sum.0 += u64::from(v.r);
+            sum.1 += u64::from(v.g);
+            sum.2 += u64::from(v.b);
         }
 
         let r = sum.0 / n;
@@ -47,9 +47,9 @@ impl GenericVector for Pixel {
 
     fn distance(&self, other: &Pixel) -> u32 {
         // cast up to i64 to avoid unsigned overflow
-        let r_dist = (self.r as i64) - (other.r as i64);
-        let g_dist = (self.g as i64) - (other.g as i64);
-        let b_dist = (self.b as i64) - (other.b as i64);
+        let r_dist = i64::from(self.r) - i64::from(other.r);
+        let g_dist = i64::from(self.g) - i64::from(other.g);
+        let b_dist = i64::from(self.b) - i64::from(other.b);
         (r_dist*r_dist + g_dist*g_dist + b_dist*b_dist) as u32
     }
 }

@@ -31,21 +31,21 @@ impl<V> ClusterVector<V> where V: GenericVector {
     }
 
     fn from_vectors(data: Vec<V>) -> Vec<ClusterVector<V>> {
-        data.into_iter().map(|v| ClusterVector::new(v)).collect()
+        data.into_iter().map(ClusterVector::new).collect()
     }
 }
 
 
-fn update_weights<V>(weights: &mut Vec<u64>, vec: &V, data: &Vec<V>)
+fn update_weights<V>(weights: &mut Vec<u64>, vec: &V, data: &[V])
     where V: GenericVector
 {
     for (i, v) in data.iter().enumerate() {
-        weights[i] = cmp::min(weights[i], vec.distance(v) as u64);
+        weights[i] = cmp::min(weights[i], u64::from(vec.distance(v)));
     }
 }
 
 // k-means++ implementation
-pub fn k_means_pp<V>(k: u32, data: &Vec<V>) -> Vec<V>
+pub fn k_means_pp<V>(k: u32, data: &[V]) -> Vec<V>
     where V: GenericVector
 {
     let mut centers = Vec::with_capacity(k as usize);
@@ -72,7 +72,7 @@ pub fn k_means_pp<V>(k: u32, data: &Vec<V>) -> Vec<V>
 }
 
 
-fn index_of_closest_center<V>(v: &V, centers: &Vec<V>) -> i32
+fn index_of_closest_center<V>(v: &V, centers: &[V]) -> i32
     where V: GenericVector
 {
     let mut min = std::u32::MAX;
@@ -88,7 +88,7 @@ fn index_of_closest_center<V>(v: &V, centers: &Vec<V>) -> i32
     min_index
 }
 
-fn assign_centers<V>(centers: &Vec<V>, cluster_vecs: &mut Vec<ClusterVector<V>>) -> bool
+fn assign_centers<V>(centers: &[V], cluster_vecs: &mut Vec<ClusterVector<V>>) -> bool
     where V: GenericVector
 {
     let mut change_made = false;
@@ -103,7 +103,7 @@ fn assign_centers<V>(centers: &Vec<V>, cluster_vecs: &mut Vec<ClusterVector<V>>)
     change_made
 }
 
-fn update_centers<V>(centers: Vec<V>, cluster_vecs: &Vec<ClusterVector<V>>) -> Vec<V>
+fn update_centers<V>(centers: Vec<V>, cluster_vecs: &[ClusterVector<V>]) -> Vec<V>
     where V: GenericVector
 {
     let n_centers = centers.len();

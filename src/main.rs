@@ -65,7 +65,7 @@ fn generate_palette(cfg: Config, image: DynamicImage) {
 
     println!("analyzing colors...");
     // run k-means clustering to get palette values as clusters
-    let clusters = kmeans::k_cluster(cfg.n_colors as u32, pixel_buf);
+    let clusters = kmeans::k_cluster(cfg.n_colors, pixel_buf);
 
     if cfg.term_output {
         output::to_terminal(&clusters);

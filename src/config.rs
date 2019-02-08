@@ -9,7 +9,7 @@ use clap::{App, Arg};
 pub struct Config {
     pub input_file: String,
     pub output_file: String,
-    pub n_colors: u8,
+    pub n_colors: u32,
     pub image_output: bool,
     pub term_output: bool,
 }
@@ -30,7 +30,7 @@ impl Config {
         Config {
             input_file,
             output_file,
-            n_colors: args.value_of("n").unwrap_or("5").parse::<u8>().unwrap(),
+            n_colors: args.value_of("n").unwrap_or("5").parse::<u32>().unwrap(),
             image_output: !args.is_present("no_image_output"),
             term_output: args.is_present("term_output"),
         }
