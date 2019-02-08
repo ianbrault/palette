@@ -17,8 +17,9 @@ pub struct Config {
 impl Config {
     fn new(args: clap::ArgMatches) -> Config {
         let input_file = String::from(args.value_of("input_file").unwrap());
-        let input_base = &input_file[0..input_file.rfind('.').unwrap()];
-        let file_type = &input_file[input_file.rfind('.').unwrap()..];
+        let delim = input_file.rfind('.').unwrap();
+        let input_base = &input_file[0..delim];
+        let file_type = &input_file[(delim+1)..];
 
         let output_file = if args.is_present("output_file") {
             String::from(args.value_of("output_file").unwrap())

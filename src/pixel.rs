@@ -21,6 +21,10 @@ impl Pixel {
     pub fn as_hex(&self) -> String {
         format!("#{:02x}{:02x}{:02x}", self.r, self.b, self.g)
     }
+
+    pub fn as_rgba(&self) -> image::Rgba<u8> {
+        image::Rgba([self.r, self.g, self.b, 1])
+    }
 }
 
 impl GenericVector for Pixel {
