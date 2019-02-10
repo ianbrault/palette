@@ -3,6 +3,8 @@
  * author: ian brault <ian.brault@engineering.ucla.edu>
  */
 
+use std::cmp;
+
 use image::{DynamicImage, GenericImageView, ImageBuffer, RgbaImage};
 
 use crate::pixel::Pixel;
@@ -31,7 +33,7 @@ impl Image {
     fn new(image: DynamicImage, n: u32) -> Image {
         let i_width = image.width();
         let i_height = image.height();
-        let padding = i_width / 6;
+        let padding = cmp::max(i_width, i_height) / 16;
         let palette_padding = padding / 2;
         let palette_size = (i_height - ((n - 1) * palette_padding)) / n;
 
