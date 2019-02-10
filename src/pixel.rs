@@ -28,11 +28,13 @@ impl Pixel {
 }
 
 impl GenericVector for Pixel {
-    fn average(vectors: Vec<&Pixel>) -> Pixel {
-        let n = vectors.len() as u64;
-
+    fn average<'a, I>(vectors: I) -> Pixel
+        where Pixel: 'a, I: Iterator<Item=&'a Pixel>
+    {
+        let mut n = 0;
         let mut sum: (u64, u64, u64) = (0, 0, 0);
         for v in vectors {
+            n += 1;
             sum.0 += u64::from(v.r);
             sum.1 += u64::from(v.g);
             sum.2 += u64::from(v.b);

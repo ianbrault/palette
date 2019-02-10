@@ -10,8 +10,8 @@ use rand::prelude::*;
 use rand::distributions::{Uniform, WeightedIndex};
 
 // generic vector used in the k-means clustering algorithm
-pub trait GenericVector<Element=Self>: Clone {
-    fn average(vectors: Vec<&Element>) -> Element;
+pub trait GenericVector<Element=Self>: Clone + Sync {
+    fn average<'a, I>(vectors: I) -> Element where Element: 'a, I: Iterator<Item=&'a Element>;
     fn distance(&self, other: &Element) -> u32;
 }
 
@@ -75,23 +75,25 @@ pub fn k_means_pp<V>(k: u32, data: &[V]) -> Vec<V>
 fn index_of_closest_center<V>(v: &V, centers: &[V]) -> i32
     where V: GenericVector
 {
-    let mut min = std::u32::MAX;
-    let mut min_index = -1;
+    let (index, _) = centers.iter()
+        .enumerate()
+        .fold((0, std::u32::MAX), |(acc_i, acc_min), (i, center)| {
+            let dist = v.distance(center);
+            if dist < acc_min {
+                (i, dist)
+            } else {
+                (acc_i, acc_min)
+            }
+        });
 
-    for (i, dist) in centers.iter().map(|c| v.distance(c)).enumerate() {
-        if dist < min {
-            min = dist;
-            min_index = i as i32;
-        }
-    }
-
-    min_index
+    index as i32
 }
 
 fn assign_centers<V>(centers: &[V], cluster_vecs: &mut Vec<ClusterVector<V>>) -> bool
     where V: GenericVector
 {
     let mut change_made = false;
+
     for cv in cluster_vecs.iter_mut() {
         let closest = index_of_closest_center(&cv.vector, &centers);
         if cv.assignment != closest {
@@ -103,17 +105,15 @@ fn assign_centers<V>(centers: &[V], cluster_vecs: &mut Vec<ClusterVector<V>>) ->
     change_made
 }
 
-fn update_centers<V>(centers: Vec<V>, cluster_vecs: &[ClusterVector<V>]) -> Vec<V>
+fn update_centers<V>(n_centers: u32, cluster_vecs: &[ClusterVector<V>]) -> Vec<V>
     where V: GenericVector
 {
-    let n_centers = centers.len();
-    let mut new_centers = Vec::with_capacity(n_centers);
+    let mut new_centers = Vec::with_capacity(n_centers as usize);
 
     for i in 0..n_centers {
         let cluster = cluster_vecs.iter()
             .filter(|cv| cv.assignment == i as i32)
-            .map(|cv| &cv.vector)
-            .collect();
+            .map(|cv| &cv.vector);
         new_centers.push(V::average(cluster));
     }
 
@@ -130,7 +130,7 @@ pub fn k_cluster<V>(k: u32, data: Vec<V>) -> Vec<V>
     let mut change_made = true;
     while change_made {
         change_made = assign_centers(&centers, &mut cluster_vecs);
-        centers = update_centers(centers, &cluster_vecs);
+        centers = update_centers(k, &cluster_vecs);
     }
 
     centers
