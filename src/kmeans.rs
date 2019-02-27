@@ -92,17 +92,18 @@ fn index_of_closest_center<V>(v: &V, centers: &[V]) -> i32
 fn assign_centers<V>(centers: &[V], cluster_vecs: &mut Vec<ClusterVector<V>>) -> bool
     where V: GenericVector
 {
-    let mut change_made = false;
+    let mut changes_made = 0;
 
     for cv in cluster_vecs.iter_mut() {
         let closest = index_of_closest_center(&cv.vector, &centers);
         if cv.assignment != closest {
             cv.assignment = closest;
-            change_made = true;
+            changes_made += 1;
         }
     }
 
-    change_made
+    // uses a 0.1% cutoff
+    changes_made >= (cluster_vecs.len() / 100)
 }
 
 fn update_centers<V>(n_centers: u32, cluster_vecs: &[ClusterVector<V>]) -> Vec<V>
