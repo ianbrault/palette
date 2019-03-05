@@ -5,7 +5,8 @@ authors = ["Ian Brault <ian.brault@engineering.ucla.edu>"]
 edition = "2018"
 
 [dependencies]
-clap = "*"
-colored = "*"
-image = "*"
-rand = "*"
+clap = "~2.32.0"
+colored = "~1.7"
+crossbeam = "~0.7.1"
+image = "~0.21.0"
+rand = "~0.6"
