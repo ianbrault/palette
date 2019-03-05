@@ -1,5 +1,5 @@
 /*
- * pixel.rs
+ * src/pixel.rs
  * pixel data structure implementation
  * author: Ian Brault <ian.brault@engineering.ucla.edu>
  */

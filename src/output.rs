@@ -1,5 +1,5 @@
 /*
- * output.rs
+ * src/output.rs
  * author: ian brault <ian.brault@engineering.ucla.edu>
  */
 

@@ -1,5 +1,5 @@
 /*
- * src/main.rs
+ * src/error.rs
  * author: Ian Brault <ian.brault@engineering.ucla.edu>
  */
 
