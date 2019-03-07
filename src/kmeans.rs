@@ -9,45 +9,37 @@ use std::cmp;
 use rand::prelude::*;
 use rand::distributions::{Uniform, WeightedIndex};
 
-// generic vector used in the k-means clustering algorithm
-pub trait GenericVector<Element=Self>: Clone {
-    fn average<'a, I>(vectors: I) -> Element where Element: 'a, I: Iterator<Item=&'a Element>;
-    fn distance(&self, other: &Element) -> u32;
-}
+use crate::pixel::Pixel;
 
 
-// used to store a GenericVector alongside its cluster assignment
-struct ClusterVector<V> where V: GenericVector {
+// used to store a Pixel alongside its cluster assignment
+struct ClusterVector {
     assignment: i32,
-    vector: V,
+    vector: Pixel,
 }
 
-impl<V> ClusterVector<V> where V: GenericVector {
-    fn new(v: V) -> ClusterVector<V> {
+impl ClusterVector {
+    fn new(vector: Pixel) -> ClusterVector {
         ClusterVector {
             assignment: -1,
-            vector: v,
+            vector,
         }
     }
 
-    fn from_vectors(data: Vec<V>) -> Vec<ClusterVector<V>> {
+    fn from_vectors(data: Vec<Pixel>) -> Vec<ClusterVector> {
         data.into_iter().map(ClusterVector::new).collect()
     }
 }
 
 
-fn update_weights<V>(weights: &mut Vec<u64>, vec: &V, data: &[V])
-    where V: GenericVector
-{
+fn update_weights(weights: &mut Vec<u64>, vec: &Pixel, data: &[Pixel]) {
     for (i, v) in data.iter().enumerate() {
         weights[i] = cmp::min(weights[i], u64::from(vec.distance(v)));
     }
 }
 
 // k-means++ implementation
-pub fn k_means_pp<V>(k: u32, data: &[V]) -> Vec<V>
-    where V: GenericVector
-{
+pub fn k_means_pp(k: u32, data: &[Pixel]) -> Vec<Pixel> {
     let mut centers = Vec::with_capacity(k as usize);
     // the weight for each vector is the minimum distance to a previously-generated center
     let mut weights = vec![std::u64::MAX; data.len()];
@@ -72,13 +64,11 @@ pub fn k_means_pp<V>(k: u32, data: &[V]) -> Vec<V>
 }
 
 
-fn index_of_closest_center<V>(v: &V, centers: &[V]) -> i32
-    where V: GenericVector
-{
+fn index_of_closest_center(vec: &Pixel, centers: &[Pixel]) -> i32 {
     let (index, _) = centers.iter()
         .enumerate()
         .fold((0, std::u32::MAX), |(acc_i, acc_min), (i, center)| {
-            let dist = v.distance(center);
+            let dist = vec.distance(center);
             if dist < acc_min {
                 (i, dist)
             } else {
@@ -89,9 +79,7 @@ fn index_of_closest_center<V>(v: &V, centers: &[V]) -> i32
     index as i32
 }
 
-fn assign_centers<V>(centers: Vec<V>, cluster_vecs: &mut Vec<ClusterVector<V>>) -> bool
-    where V: GenericVector
-{
+fn assign_centers(centers: Vec<Pixel>, cluster_vecs: &mut Vec<ClusterVector>) -> bool {
     let mut changes_made = 0;
 
     for cv in cluster_vecs.iter_mut() {
@@ -106,25 +94,21 @@ fn assign_centers<V>(centers: Vec<V>, cluster_vecs: &mut Vec<ClusterVector<V>>) 
     changes_made >= (cluster_vecs.len() / 100)
 }
 
-fn update_centers<V>(n_centers: u32, cluster_vecs: &[ClusterVector<V>]) -> Vec<V>
-    where V: GenericVector
-{
+fn update_centers(n_centers: u32, cluster_vecs: &[ClusterVector]) -> Vec<Pixel> {
     let mut new_centers = Vec::with_capacity(n_centers as usize);
 
     for i in 0..n_centers {
         let cluster = cluster_vecs.iter()
             .filter(|cv| cv.assignment == i as i32)
             .map(|cv| &cv.vector);
-        new_centers.push(V::average(cluster));
+        new_centers.push(Pixel::average(cluster));
     }
 
     new_centers
 }
 
 // k-means clustering implementation
-pub fn k_cluster<V>(k: u32, data: Vec<V>) -> Vec<V>
-    where V: 'static + GenericVector
-{
+pub fn k_cluster(k: u32, data: Vec<Pixel>) -> Vec<Pixel> {
     let mut centers = k_means_pp(k, &data);
     let mut cluster_vecs = ClusterVector::from_vectors(data);
 

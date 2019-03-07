@@ -1,10 +1,8 @@
 /*
  * src/pixel.rs
- * pixel data structure implementation
+ * pixel data structure
  * author: Ian Brault <ian.brault@engineering.ucla.edu>
  */
-
-use crate::kmeans::GenericVector;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Pixel {
@@ -25,10 +23,16 @@ impl Pixel {
     pub fn as_rgba(&self) -> image::Rgba<u8> {
         image::Rgba([self.r, self.g, self.b, 1])
     }
-}
 
-impl GenericVector for Pixel {
-    fn average<'a, I>(vectors: I) -> Pixel
+    pub fn distance(&self, other: &Pixel) -> u32 {
+        // cast up to i64 to avoid unsigned overflow
+        let r_dist = i64::from(self.r) - i64::from(other.r);
+        let g_dist = i64::from(self.g) - i64::from(other.g);
+        let b_dist = i64::from(self.b) - i64::from(other.b);
+        (r_dist*r_dist + g_dist*g_dist + b_dist*b_dist) as u32
+    }
+
+    pub fn average<'a, I>(vectors: I) -> Pixel
         where Pixel: 'a, I: Iterator<Item=&'a Pixel>
     {
         let mut n = 0;
@@ -45,14 +49,6 @@ impl GenericVector for Pixel {
         let b = sum.2 / n;
 
         Pixel::new(r as u8, g as u8, b as u8)
-    }
-
-    fn distance(&self, other: &Pixel) -> u32 {
-        // cast up to i64 to avoid unsigned overflow
-        let r_dist = i64::from(self.r) - i64::from(other.r);
-        let g_dist = i64::from(self.g) - i64::from(other.g);
-        let b_dist = i64::from(self.b) - i64::from(other.b);
-        (r_dist*r_dist + g_dist*g_dist + b_dist*b_dist) as u32
     }
 }
 
