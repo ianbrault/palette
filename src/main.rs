@@ -8,8 +8,6 @@ mod error;
 mod kmeans;
 mod output;
 mod pixel;
-mod semaphore;
-mod threadpool;
 
 use std::cmp;
 use std::fs;

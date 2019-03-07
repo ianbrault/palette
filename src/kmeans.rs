@@ -10,7 +10,7 @@ use rand::prelude::*;
 use rand::distributions::{Uniform, WeightedIndex};
 
 // generic vector used in the k-means clustering algorithm
-pub trait GenericVector<Element=Self>: Clone + Sync {
+pub trait GenericVector<Element=Self>: Clone {
     fn average<'a, I>(vectors: I) -> Element where Element: 'a, I: Iterator<Item=&'a Element>;
     fn distance(&self, other: &Element) -> u32;
 }
@@ -89,7 +89,7 @@ fn index_of_closest_center<V>(v: &V, centers: &[V]) -> i32
     index as i32
 }
 
-fn assign_centers<V>(centers: &[V], cluster_vecs: &mut Vec<ClusterVector<V>>) -> bool
+fn assign_centers<V>(centers: Vec<V>, cluster_vecs: &mut Vec<ClusterVector<V>>) -> bool
     where V: GenericVector
 {
     let mut changes_made = 0;
@@ -123,14 +123,14 @@ fn update_centers<V>(n_centers: u32, cluster_vecs: &[ClusterVector<V>]) -> Vec<V
 
 // k-means clustering implementation
 pub fn k_cluster<V>(k: u32, data: Vec<V>) -> Vec<V>
-    where V: GenericVector
+    where V: 'static + GenericVector
 {
     let mut centers = k_means_pp(k, &data);
     let mut cluster_vecs = ClusterVector::from_vectors(data);
 
     let mut change_made = true;
     while change_made {
-        change_made = assign_centers(&centers, &mut cluster_vecs);
+        change_made = assign_centers(centers, &mut cluster_vecs);
         centers = update_centers(k, &cluster_vecs);
     }
 
