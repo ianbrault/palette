@@ -12,9 +12,10 @@ use rand::distributions::{Uniform, WeightedIndex};
 use crate::pixel::Pixel;
 
 
-// used to store a Pixel alongside its cluster assignment
+// used to store a Pixel alongside its center assignment and the distance to it
 struct ClusterVector {
     assignment: i32,
+    min_distance: u32,
     vector: Pixel,
 }
 
@@ -22,6 +23,7 @@ impl ClusterVector {
     fn new(vector: Pixel) -> ClusterVector {
         ClusterVector {
             assignment: -1,
+            min_distance: std::u32::MAX,
             vector,
         }
     }
@@ -64,34 +66,24 @@ pub fn k_means_pp(k: u32, data: &[Pixel]) -> Vec<Pixel> {
 }
 
 
-fn index_of_closest_center(vec: &Pixel, centers: &[Pixel]) -> i32 {
-    let (index, _) = centers.iter()
-        .enumerate()
-        .fold((0, std::u32::MAX), |(acc_i, acc_min), (i, center)| {
-            let dist = vec.distance(center);
-            if dist < acc_min {
-                (i, dist)
-            } else {
-                (acc_i, acc_min)
-            }
-        });
-
-    index as i32
-}
-
 fn assign_centers(centers: Vec<Pixel>, cluster_vecs: &mut Vec<ClusterVector>) -> bool {
-    let mut changes_made = 0;
+    let mut n_changes = 0;
 
     for cv in cluster_vecs.iter_mut() {
-        let closest = index_of_closest_center(&cv.vector, &centers);
-        if cv.assignment != closest {
-            cv.assignment = closest;
-            changes_made += 1;
+        for (i, center) in centers.iter().enumerate() {
+            let dist = cv.vector.distance(center);
+            if dist < cv.min_distance {
+                if cv.assignment != i as i32 {
+                    n_changes += 1;
+                    cv.assignment = i as i32;
+                }
+                cv.min_distance = dist;
+            }
         }
     }
 
     // uses a 0.1% cutoff
-    changes_made >= (cluster_vecs.len() / 100)
+    n_changes >= (cluster_vecs.len() / 100)
 }
 
 fn update_centers(n_centers: u32, cluster_vecs: &[ClusterVector]) -> Vec<Pixel> {
