@@ -5,6 +5,7 @@
 
 mod config;
 mod error;
+mod kdtree;
 mod kmeans;
 mod output;
 mod pixel;
