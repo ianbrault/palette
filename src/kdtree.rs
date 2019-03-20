@@ -6,32 +6,36 @@
 
 use crate::pixel::Pixel;
 
-type KDTreeNode = Option<Box<KDTree>>;
+type KDNode = Box<KDTree>;
 
 pub struct KDTree {
     pixel: Pixel,
-    left: KDTreeNode,
-    right: KDTreeNode,
+    left: Option<KDNode>,
+    right: Option<KDNode>,
 }
 
 impl KDTree {
-    fn new_node(pixel: Pixel, left: KDTreeNode, right: KDTreeNode) -> Box<KDTree> {
+    fn new_node(pixel: Pixel, left: Option<KDNode>, right: Option<KDNode>) -> KDNode {
         Box::new(KDTree { pixel, left, right })
     }
 
-    fn new_rec(dimension: u8, data: &mut [Pixel]) -> KDTreeNode {
+    fn sort_by_dimension(data: &mut [Pixel], dimension: u8) {
+        if dimension == 0 {
+            data.sort_by(|p1, p2| p1.r.cmp(&p2.r));
+        } else if dimension == 1 {
+            data.sort_by(|p1, p2| p1.g.cmp(&p2.g));
+        } else {
+            data.sort_by(|p1, p2| p1.b.cmp(&p2.b));
+        }
+    }
+
+    fn new_rec(dimension: u8, data: &mut [Pixel]) -> Option<KDNode> {
         match data.len() {
             0 => None,
             1 => Some(KDTree::new_node(data[0].clone(), None, None)),
             n => {
                 // sort by current dimension
-                if dimension == 0 {
-                    data.sort_by(|p1, p2| p1.r.cmp(&p2.r));
-                } else if dimension == 1 {
-                    data.sort_by(|p1, p2| p1.g.cmp(&p2.g));
-                } else {
-                    data.sort_by(|p1, p2| p1.b.cmp(&p2.b));
-                }
+                KDTree::sort_by_dimension(data, dimension);
                 // select pivot and recursively build subtrees
                 let pivot = n / 2;
                 let next_dimension = (dimension + 1) % 3;
@@ -55,6 +59,37 @@ impl KDTree {
         let right = KDTree::new_rec(1, &mut data[(pivot+1)..]);
 
         KDTree { pixel, left, right }
+    }
+
+    fn find_rec(dimension: u8, node: &Option<KDNode>, pixel: &Pixel) -> bool {
+        if let Some(node_inner) = node {
+            let (self_el, other_el) = match dimension {
+                0 => (node_inner.pixel.r, pixel.r),
+                1 => (node_inner.pixel.g, pixel.g),
+                _ => (node_inner.pixel.b, pixel.b),
+            };
+            let new_dimension = (dimension + 1) % 3;
+
+            if node_inner.pixel == *pixel {
+                true
+            } else if other_el > self_el {
+                KDTree::find_rec(new_dimension, &node_inner.right, pixel)
+            } else {
+                KDTree::find_rec(new_dimension, &node_inner.left, pixel)
+            }
+        } else {
+            false
+        }
+    }
+
+    fn find(&self, pixel: &Pixel) -> bool {
+        if self.pixel == *pixel {
+            true
+        } else if pixel.r > self.pixel.r {
+            KDTree::find_rec(1, &self.right, pixel)
+        } else {
+            KDTree::find_rec(1, &self.left, pixel)
+        }
     }
 }
 
@@ -104,5 +139,16 @@ mod tests {
         assert_eq!(right_left.pixel, Pixel::new(6,0,1));
         assert!(right_left.left.is_none());
         assert!(right_left.right.is_none());
+    }
+
+    #[test]
+    fn test_find() {
+        let mut data = get_test_pixels();
+        let tree = KDTree::new(&mut data);
+
+        assert!(tree.find(&Pixel::new(3,2,1)));
+        assert!(tree.find(&Pixel::new(4,4,4)));
+        assert!(!tree.find(&Pixel::new(0,0,0)));
+        assert!(!tree.find(&Pixel::new(6,7,4)));
     }
 }
