@@ -19,7 +19,7 @@ impl KDTree {
         Box::new(KDTree { pixel, left, right })
     }
 
-    fn sort_by_dimension(data: &mut [Pixel], dimension: u8) {
+    fn sort_by_dimension(dimension: u8, data: &mut [Pixel]) {
         if dimension == 0 {
             data.sort_by(|p1, p2| p1.r.cmp(&p2.r));
         } else if dimension == 1 {
@@ -35,7 +35,7 @@ impl KDTree {
             1 => Some(KDTree::new_node(data[0].clone(), None, None)),
             n => {
                 // sort by current dimension
-                KDTree::sort_by_dimension(data, dimension);
+                KDTree::sort_by_dimension(dimension, data);
                 // select pivot and recursively build subtrees
                 let pivot = n / 2;
                 let next_dimension = (dimension + 1) % 3;
